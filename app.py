@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
 # -------------------------------
 # Page Configuration
@@ -117,3 +118,20 @@ if uploaded_file is not None:
     st.subheader("📈 Statistical Summary")
 
     st.dataframe(df.describe())
+    #intractive 📊 Interactive Visualization------------------
+
+    st.subheader("📊 Interactive Visualization")
+    numeric_columns = df.select_dtypes(include=["number"]).columns
+
+    selected_column = st.selectbox(
+        "selected a Numeric Column",
+        numeric_columns
+    )
+    
+    fig = px.histogram(
+        df,
+        x=selected_column,
+        title=f"Distribution of {selected_column}"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
