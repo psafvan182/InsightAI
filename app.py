@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
+import plotly.figure_factory as ff
 # -------------------------------
 # Page Configuration
 # -------------------------------
@@ -116,22 +116,124 @@ if uploaded_file is not None:
     # Statistical Summary
     # -------------------------------
     st.subheader("📈 Statistical Summary")
-
     st.dataframe(df.describe())
-    #intractive 📊 Interactive Visualization------------------
 
+    # =====================================================
+    # NUMERIC VISUALIZATION
+    # =====================================================
     st.subheader("📊 Interactive Visualization")
+
     numeric_columns = df.select_dtypes(include=["number"]).columns
 
     selected_column = st.selectbox(
-        "selected a Numeric Column",
+        "Select a Numeric Column",
         numeric_columns
     )
-    
-    fig = px.histogram(
-        df,
-        x=selected_column,
-        title=f"Distribution of {selected_column}"
+
+    chart_type = st.selectbox(
+        "Select Chart Type",
+        [
+            "Histogram",
+            "Box Plot",
+            "Bar Chart"
+        ]
     )
 
+    if chart_type == "Histogram":
+
+        fig = px.histogram(
+            df,
+            x=selected_column,
+            title=f"Distribution of {selected_column}"
+        )
+
+    elif chart_type == "Box Plot":
+
+        fig = px.box(
+            df,
+            y=selected_column,
+            title=f"Box Plot of {selected_column}"
+        )
+
+    else:
+
+        counts = df[selected_column].value_counts().reset_index()
+        counts.columns = [selected_column, "Count"]
+
+        fig = px.bar(
+            counts,
+            x=selected_column,
+            y="Count",
+            title=f"Bar Chart of {selected_column}"
+        )
+
     st.plotly_chart(fig, use_container_width=True)
+
+    # =====================================================
+    # CATEGORICAL VISUALIZATION
+    # =====================================================
+    st.subheader("📊 Categorical Data Visualization")
+
+    categorical_columns = df.select_dtypes(include=["object"]).columns
+
+    if len(categorical_columns) > 0:
+
+        categorical_column = st.selectbox(
+            "Select a Categorical Column",
+            categorical_columns
+        )
+
+
+    
+        chart = st.selectbox(
+            "Select Category Chart",
+            [
+                "Bar Chart",
+                "Pie Chart"
+            ]
+        )
+
+        counts = df[categorical_column].value_counts().reset_index()
+        counts.columns = [categorical_column, "Count"]
+
+        if chart == "Bar Chart":
+
+            fig = px.bar(
+                counts,
+                x=categorical_column,
+                y="Count",
+                title=f"{categorical_column} Distribution"
+            )
+
+        else:
+
+            fig = px.pie(
+                counts,
+                names=categorical_column,
+                values="Count",
+                title=f"{categorical_column} Distribution"
+            )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.subheader("🔥 Correlation Heatmap")
+
+        numeric_df = df.select_dtypes(include="number")
+        corr = numeric_df.corr()
+
+        fig =   ff.create_annotated_heatmap(
+            z=corr.values,
+            x=list(corr.columns),
+            y=list(corr.index),
+            annotation_text=corr.round(2).values,
+            colorscale="Viridis",
+            showscale=True
+
+        )
+
+        st.plotly_chart(fig,use_container_width=True)
+
+
+
+    else:
+        st.info("No categorical columns found in this dataset.")
