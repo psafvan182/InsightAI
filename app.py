@@ -232,8 +232,84 @@ if uploaded_file is not None:
         )
 
         st.plotly_chart(fig,use_container_width=True)
+# =====================================================
+# DATA CLEANING
+# =====================================================
 
 
+        st.subheader("🧹 Data Cleaning")
 
+        clean_option = st.selectbox(
+            "Choose a Cleaning Operation",
+            [
+                "Select",
+                "Remove Missing Values",
+                "Fill Missing Values",
+                "Remove Duplicate Rows"
+            ]
+        )
+
+        #Remove missing values 
+
+        if clean_option == "Remove Missing Values":
+
+            orginal_rows = df.shape[0]
+
+            cleaned_df = df.dropna()
+            removed_rows = orginal_rows - cleaned_df.shape[0]
+
+            st.success(f"✅ Removed {removed_rows} rows with missing values.")
+            st.write("###Cleaned Data Set")
+            st.dataframe(cleaned_df)
+
+
+            # Fill missing Values
+            # -----------------------
+
+        elif clean_option == "Fill Missing Values":
+
+            filled_df = df.copy()
+
+            numeric_columns = filled_df.select_dtypes(include=["number"]).columns
+
+            filled_df[numeric_columns] = filled_df[numeric_columns].fillna(
+                filled_df[numeric_columns].mean()
+            )
+
+            # Fill categorical columns with mode
+
+            categorical_columns = filled_df.select_dtypes(include=["object"]).columns
+
+            for col in categorical_columns:
+                filled_df[col] = filled_df[col].fillna(
+                    filled_df[col].mode()[0]
+
+                )
+
+            st.success("✅ Missing values filled with column mean.")
+
+            st.write("### Cleaned Dataset")
+            st.dataframe(filled_df)
+
+            # Remove Duplicate Rows
+
+        elif clean_option == "Remove Duplicate Rows":
+
+            orginal_rows = df.shape[0]
+
+            cleaned_df = df.drop_duplicates()
+            removed_rows = orginal_rows - cleaned_df.shape[0]
+
+            st.success(f"✅ Removed {removed_rows} duplicate rows.")
+            st.write("### Cleaned Dataset")
+            st.dataframe(cleaned_df)
+
+            st.download_button(
+                label="📥 Download Cleaned Dataset",
+                data=cleaned_df.to_csv(index=False),
+                file_name="cleaned_dataset.csv",
+                mime="text/csv"
+            )
+    
     else:
         st.info("No categorical columns found in this dataset.")
