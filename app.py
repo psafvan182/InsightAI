@@ -2,6 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier,RandomForestRegressor 
+from sklearn.metrics import accuracy_score, mean_absolute_error
+# from pandas.api.types import is_numeric_dtype
 # -------------------------------
 # Page Configuration
 # -------------------------------
@@ -174,7 +179,7 @@ if uploaded_file is not None:
     # =====================================================
     st.subheader("📊 Categorical Data Visualization")
 
-    categorical_columns = df.select_dtypes(include=["object"]).columns
+    categorical_columns = df.select_dtypes(include=["object", "string"]).columns
 
     if len(categorical_columns) > 0:
 
@@ -286,7 +291,7 @@ if uploaded_file is not None:
 
                 )
 
-            st.success("✅ Missing values filled with column mean.")
+            st.success("✅ Missing values filled successfully.")
 
             st.write("### Cleaned Dataset")
             st.dataframe(filled_df)
@@ -310,6 +315,112 @@ if uploaded_file is not None:
                 file_name="cleaned_dataset.csv",
                 mime="text/csv"
             )
-    
-    else:
-        st.info("No categorical columns found in this dataset.")
+
+
+# =====================================================
+# MACHINE LEARNING
+# =====================================================
+
+        st.header("🤖 Machine Learning")
+
+        target_column = st.selectbox(
+            "🎯 Select Target Column",
+            df.columns
+        )
+
+    #Detect problem type
+        from pandas.api.types import is_numeric_dtype
+
+        if is_numeric_dtype(df[target_column].dtype):
+            problem_type = "Regression"
+        else:
+            problem_type = "Classification"
+
+        st.info(f"🧠 Detected Problem Type:{problem_type}")
+
+
+        train_button = st.button("🚀 Train Model")
+
+        if train_button:
+
+                #Features 
+
+                X = df.drop(columns=[target_column])
+
+                #Target
+                
+                y = df[target_column]
+
+                st.success("✅ Features and Target created successfully!")
+
+                st.write("### Features (X)")
+                st.dataframe(X.head())   
+
+
+
+                # Label Encoding
+    #  -----------------------------------
+                categorical_columns  =  X.select_dtypes(include=["object", "string"]).columns
+
+                if len(categorical_columns) >0:
+
+                    label_encoder = LabelEncoder()
+
+                    for col in categorical_columns:
+
+                        X[col] = label_encoder.fit_transform(X[col].astype(str))
+
+                    st.success("✅ Categorical columns encoded successfully!")
+
+            
+                else:
+                    st.info("ℹ️ No categorical columns found.")
+
+
+
+
+                
+                
+
+                X_train, X_test, y_train, y_test = train_test_split(
+                            X,
+                            y,
+                            test_size=0.2,
+                            random_state=42
+                            
+                        )
+                st.success("✅ Train-Test Split completed")
+                st.write("### Training Data Shape")
+                st.write(X_train.shape)
+
+                st.write("### Testing Data Shape")
+                st.write(X_test.shape)
+
+            # tarin machine model
+
+                if problem_type == "Regression":
+                    model = RandomForestClassifier(random_state=42)
+
+
+                else:
+                    model = RandomForestClassifier(random_state=42)
+
+                    model.fit(X_train,y_train)
+                    st.success("✅ Model trained successfully!")
+
+
+                    predictions = model.predict(X_test)
+                    st.success("✅ Prediction completed!")
+
+
+                    st.write("###predictions")
+
+                st.dataframe(predictions)
+
+
+        #    if problem_type == "Regression":
+
+
+  
+    # else:
+    #     st.info("No categorical columns found in this dataset.")
