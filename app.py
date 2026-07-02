@@ -317,105 +317,145 @@ if uploaded_file is not None:
             )
 
 
-# =====================================================
-# MACHINE LEARNING
-# =====================================================
+    # =====================================================
+    # MACHINE LEARNING
+    # =====================================================
 
-        st.header("🤖 Machine Learning")
+    st.header("🤖 Machine Learning")
 
-        target_column = st.selectbox(
-            "🎯 Select Target Column",
-            df.columns
+    target_column = st.selectbox(
+        "🎯 Select Target Column",
+        df.columns
+    )
+
+    # Detect problem type
+    from pandas.api.types import is_numeric_dtype
+
+    if is_numeric_dtype(df[target_column]):
+        problem_type = "Regression"
+    else:
+        problem_type = "Classification"
+
+    st.info(f"🧠 Detected Problem Type: {problem_type}")
+
+    train_button = st.button("🚀 Train Model")
+
+    if train_button:
+
+        # ==========================================
+        # Features & Target
+        # ==========================================
+
+        df = df.dropna(subset=[target_column])
+
+
+        X = df.drop(columns=[target_column])
+        y = df[target_column]
+
+        st.success("✅ Features and Target created successfully!")
+
+        st.write("### Features (X)")
+        st.dataframe(X.head())
+
+        st.write("### Target (y)")
+        st.dataframe(y.head())
+
+        # ==========================================
+        # Label Encoding
+        # ==========================================
+
+        categorical_columns = X.select_dtypes(include=["object", "string"]).columns
+
+        if len(categorical_columns) > 0:
+
+            label_encoder = LabelEncoder()
+
+            for col in categorical_columns:
+                X[col] = label_encoder.fit_transform(X[col].astype(str))
+
+            st.success("✅ Categorical columns encoded successfully!")
+
+        else:
+            st.info("ℹ️ No categorical columns found.")
+
+        # ==========================================
+        # Train-Test Split
+        # ==========================================
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            y,
+            test_size=0.2,
+            random_state=42
         )
 
-    #Detect problem type
-        from pandas.api.types import is_numeric_dtype
+        st.success("✅ Train-Test Split completed!")
 
-        if is_numeric_dtype(df[target_column].dtype):
-            problem_type = "Regression"
+        st.write("### Training Data Shape")
+        st.write(X_train.shape)
+
+        st.write("### Testing Data Shape")
+        st.write(X_test.shape)
+
+        # ==========================================
+        # Train Model
+        # ==========================================
+
+        if problem_type == "Regression":
+            model = RandomForestRegressor(random_state=42)
         else:
-            problem_type = "Classification"
+            model = RandomForestClassifier(random_state=42)
 
-        st.info(f"🧠 Detected Problem Type:{problem_type}")
+        model.fit(X_train, y_train)
 
+        st.success("✅ Model trained successfully!")
 
-        train_button = st.button("🚀 Train Model")
+        # ==========================================
+        # Prediction
+        # ==========================================
 
-        if train_button:
+        predictions = model.predict(X_test)
 
-                #Features 
+        st.success("✅ Prediction completed!")
 
-                X = df.drop(columns=[target_column])
+        st.subheader("📋 Predictions")
 
-                #Target
-                
-                y = df[target_column]
+        prediction_df = pd.DataFrame({
+            "Prediction": predictions
+        })
 
-                st.success("✅ Features and Target created successfully!")
+        st.dataframe(prediction_df)
 
-                st.write("### Features (X)")
-                st.dataframe(X.head())   
+        # ==========================================
+        # Model Evaluation
+        # ==========================================
 
+        st.subheader("📈 Model Evaluation")
 
+        if problem_type == "Classification":
 
-                # Label Encoding
-    #  -----------------------------------
-                categorical_columns  =  X.select_dtypes(include=["object", "string"]).columns
+            accuracy = accuracy_score(y_test, predictions)
 
-                if len(categorical_columns) >0:
+            st.success(f"🎯 Model Accuracy: {accuracy:.2%}")
 
-                    label_encoder = LabelEncoder()
+        else:
 
-                    for col in categorical_columns:
+            mae = mean_absolute_error(y_test, predictions)
 
-                        X[col] = label_encoder.fit_transform(X[col].astype(str))
+            st.success(f"📉 Mean Absolute Error (MAE): {mae:.2f}")
 
-                    st.success("✅ Categorical columns encoded successfully!")
+        # ==========================================
+        # Actual vs Predicted
+        # ==========================================
 
-            
-                else:
-                    st.info("ℹ️ No categorical columns found.")
+        st.subheader("📋 Actual vs Predicted")
 
+        results = pd.DataFrame({
+            "Actual": y_test.values,
+            "Predicted": predictions
+        })
 
-
-
-                
-                
-
-                X_train, X_test, y_train, y_test = train_test_split(
-                            X,
-                            y,
-                            test_size=0.2,
-                            random_state=42
-                            
-                        )
-                st.success("✅ Train-Test Split completed")
-                st.write("### Training Data Shape")
-                st.write(X_train.shape)
-
-                st.write("### Testing Data Shape")
-                st.write(X_test.shape)
-
-            # tarin machine model
-
-                if problem_type == "Regression":
-                    model = RandomForestClassifier(random_state=42)
-
-
-                else:
-                    model = RandomForestClassifier(random_state=42)
-
-                    model.fit(X_train,y_train)
-                    st.success("✅ Model trained successfully!")
-
-
-                    predictions = model.predict(X_test)
-                    st.success("✅ Prediction completed!")
-
-
-                    st.write("###predictions")
-
-                st.dataframe(predictions)
+        st.dataframe(results)
 
 
         #    if problem_type == "Regression":
