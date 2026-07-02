@@ -426,6 +426,31 @@ if uploaded_file is not None:
 
         st.dataframe(prediction_df)
 
+        
+        st.subheader("⭐ Feature Importance")
+        importance_df = pd.DataFrame({
+            "Feature": X.columns,
+            "Importance": model.feature_importances_
+        })
+
+        importance_df = importance_df.sort_values(
+            by="Importance",
+            ascending=False
+        )
+
+        st.dataframe(importance_df)
+
+        fig = px.bar(
+            importance_df,
+            x="Feature",
+            y="Importance",
+            title="Feature Importance"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        
+
         # ==========================================
         # Model Evaluation
         # ==========================================
