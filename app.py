@@ -328,6 +328,30 @@ if uploaded_file is not None:
         df.columns
     )
 
+# ==========================================
+# Validate Target Column
+# ==========================================
+
+
+    invalid_targets = [
+        "id",
+        "customerid",
+        "customer_id",
+        "employeeid",
+        "employee_id",
+        "name",
+        "rollno",
+        "roll_no"
+    ]
+
+    if target_column.lower() in invalid_targets:
+        st.error(
+    f"❌ '{target_column}' is an identifier column.\n\n"
+    "Please select a meaningful target like Salary, Purchased, Churn, Price or Income."
+)
+
+        st.stop()
+
     # Detect problem type
     from pandas.api.types import is_numeric_dtype
 
@@ -350,6 +374,30 @@ if uploaded_file is not None:
 
 
         X = df.drop(columns=[target_column])
+# ==========================================
+# Remove Identifier Columns
+# ==========================================
+
+        identifier_columns =   [
+            "id",
+            "customerid",
+            "customer_id",
+            "employeeid",
+            "employee_id",
+            "name",
+            "rollno",
+            "roll_no"
+        ]
+
+        columns_to_remove = []
+        for col in X.columns:
+            if col.lower() in identifier_columns:
+                columns_to_remove.append(col)
+
+        if columns_to_remove:
+            X = X.drop(columns=columns_to_remove)
+            st.warning(f"⚠️ Removed identifier columns: {columns_to_remove}")
+
         y = df[target_column]
 
         st.success("✅ Features and Target created successfully!")
@@ -481,6 +529,10 @@ if uploaded_file is not None:
         })
 
         st.dataframe(results)
+# ==========================================
+# Download Predictions
+# ==========================================
+
 
         csv = results.to_csv(index=False).encode("utf-8")
         st.download_button(
@@ -488,7 +540,7 @@ if uploaded_file is not None:
             data=csv,
             file_name="predictions.csv",
             mime="text/csv"
-            
+
         )
 
 
